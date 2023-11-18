@@ -1,0 +1,18 @@
+<div class="row" [formGroup]="form">
+  <app-chip formControlName="uncheckable"> uncheckable </app-chip>
+
+  <app-chips-group
+    formControlName="value"
+    [uncheckable]="form.get('uncheckable')?.value ?? false"
+  >
+    <app-chip *ngFor="let item of data" [value]="item.key">
+      {{ item.key }}
+    </app-chip>
+  </app-chips-group>
+
+  <div>
+    <div>
+      {{ form.value | json }}
+    </div>
+  </div>
+</div>
