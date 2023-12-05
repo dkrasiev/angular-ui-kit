@@ -1,21 +1,29 @@
-import { Component } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { Component } from '@angular/core'
+import { FormBuilder } from '@angular/forms'
 
 interface Item {
-  key: string;
-  items?: Item[];
+  key: string
+  items?: Item[]
 }
 
 @Component({
   selector: 'app-test',
-  templateUrl: './test.component.html',
-  styleUrls: ['./test.component.scss'],
+  standalone: true,
+  imports: [],
+  styles: [
+    `
+      .column {
+        width: 10rem;
+      }
+    `,
+  ],
+  template: ` <p>Test works!</p> `,
 })
 export class TestComponent {
   form = this.fb.group({
     main: this.fb.control(null),
     secondary: this.fb.control(null),
-  });
+  })
 
   data = [
     {
@@ -41,19 +49,19 @@ export class TestComponent {
       count: 23,
       items: this.generateArray(5),
     },
-  ] as const;
+  ] as const
 
   constructor(private fb: FormBuilder) {
     this.form.valueChanges.subscribe((value) => {
-      console.log(value);
-    });
+      console.log(value)
+    })
   }
 
   onSubmit(_e?: SubmitEvent) {
-    console.log(this.form.value);
+    console.log(this.form.value)
   }
 
   private generateArray(k: number): Item[] {
-    return new Array(k).fill(null).map((_, i) => ({ key: `Item ${i}` }));
+    return new Array(k).fill(null).map((_, i) => ({ key: `Item ${i}` }))
   }
 }

@@ -7,6 +7,9 @@
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
+          "changeDetection": "OnPush",
+          "inlineStyle": true,
+          "inlineTemplate": true,
           "style": "scss"
         }
       },
@@ -65,10 +68,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "forms:build:production"
+              "buildTarget": "forms:build:production"
             },
             "development": {
-              "browserTarget": "forms:build:development"
+              "buildTarget": "forms:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -76,7 +79,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "forms:build"
+            "buildTarget": "forms:build"
           }
         },
         "test": {
@@ -102,6 +105,9 @@
     },
     "ui": {
       "projectType": "library",
+      "schematics": {
+        "prefix": "ui"
+      },
       "root": "projects/ui",
       "sourceRoot": "projects/ui/src",
       "prefix": "lib",

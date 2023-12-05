@@ -1,5 +1,5 @@
-import { Provider, Type } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { Provider, Type } from '@angular/core'
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms'
 
 export function asValueAccessor(
   useExisting: Type<ControlValueAccessor>,
@@ -8,5 +8,5 @@ export function asValueAccessor(
     provide: NG_VALUE_ACCESSOR,
     useExisting,
     multi: true,
-  };
+  }
 }

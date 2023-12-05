@@ -21,7 +21,8 @@
     "useDefineForClassFields": false,
     "paths": {
       "ui": [
-        "dist/ui"
+        "dist/ui",
+        "projects/ui"
       ]
     },
     "lib": [

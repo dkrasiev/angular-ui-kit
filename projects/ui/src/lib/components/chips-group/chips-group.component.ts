@@ -3,87 +3,118 @@ import {
   Input,
   Component,
   ContentChildren,
-  OnDestroy,
   ChangeDetectionStrategy,
-} from '@angular/core';
-import { ControlValueAccessor } from '@angular/forms';
-import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
+  Output,
+  EventEmitter,
+  Injector,
+  runInInjectionContext,
+} from '@angular/core'
+import { ControlValueAccessor } from '@angular/forms'
+import { BehaviorSubject } from 'rxjs'
 
-import { asValueAccessor } from '../../tokens/as-value-accessor';
-import { ChipComponent } from '../chip/chip.component';
-import { EMPTY_FUNCTION } from '../../models/empty-function';
+import { asValueAccessor } from '../../tokens/as-value-accessor'
+import { ChipComponent } from '../chip/chip.component'
+import { EMPTY_FUNCTION } from '../../models/empty-function'
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 
 @Component({
   selector: 'app-chips-group',
-  templateUrl: './chips-group.component.html',
-  styleUrls: ['./chips-group.component.scss'],
-  providers: [asValueAccessor(ChipsGroupComponent)],
+  standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [asValueAccessor(ChipsGroupComponent)],
+  template: ` <ng-content />`,
 })
 export class ChipsGroupComponent<T>
-  implements ControlValueAccessor, AfterViewInit, OnDestroy {
-  @Input()
-  set value(value: T | undefined) {
-    this.value$.next(value);
-
-    this.onChange(this.value);
-    this.syncChips();
+  implements ControlValueAccessor, AfterViewInit {
+  @Input() set value(value: T | null) {
+    this.value$.next(value)
   }
-
-  get value(): T | undefined {
-    return this.value$.value;
+  get value() {
+    return this.value$.value
   }
-
-  @Input()
-  uncheckable = false;
+  @Input() set disabled(disabled: boolean) {
+    this.disabled$.next(disabled)
+  }
+  get disabled() {
+    return this.disabled$.value
+  }
+  @Input() uncheckable = false
 
   @ContentChildren(ChipComponent, { descendants: true })
-  private chips: ChipComponent<T>[] = [];
+  private chips: ChipComponent<T>[] = []
 
-  value$ = new BehaviorSubject<T | undefined>(undefined);
+  @Output() change = new EventEmitter<T | null>()
+  @Output() blur = new EventEmitter<void>()
 
-  private onChange: (value: T | undefined) => void = EMPTY_FUNCTION;
-  private onTouched: () => void = EMPTY_FUNCTION;
+  // state
+  value$ = new BehaviorSubject<T | null>(null)
+  disabled$ = new BehaviorSubject<boolean>(false)
 
-  private destroy$ = new Subject<void>();
+  private onChange: (value: T | null) => void = EMPTY_FUNCTION
+  private onTouched: () => void = EMPTY_FUNCTION
 
-  ngAfterViewInit(): void {
-    this.chips.forEach((chip) => {
-      chip.change.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        if (this.uncheckable && this.value === chip.value) {
-          this.value = undefined;
-          return;
-        }
+  constructor(private injector: Injector) {
+    // sync state with child chips
+    this.value$.pipe(takeUntilDestroyed()).subscribe((value) => {
+      this.syncChecked(value)
+    })
+    this.disabled$.pipe(takeUntilDestroyed()).subscribe((isDisabled) => {
+      this.syncDisabled(isDisabled)
+    })
 
-        this.value = chip.value;
-      });
-
-      chip.blur.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        this.onTouched();
-      });
-    });
+    // sync with ValueAccessor
+    this.change.pipe(takeUntilDestroyed()).subscribe((value) => {
+      this.onChange(value)
+    })
+    this.blur.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.onTouched()
+    })
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+  ngAfterViewInit(): void {
+    runInInjectionContext(this.injector, () => {
+      this.chips.forEach((c) => {
+        c.change.pipe(takeUntilDestroyed()).subscribe(() => {
+          let value = c.value
+
+          if (this.uncheckable && this.value === c.value) {
+            value = null
+          }
+
+          this.value$.next(value)
+          this.change.emit(value)
+        })
+
+        c.blur.pipe(takeUntilDestroyed()).subscribe(() => {
+          this.blur.emit()
+        })
+      })
+    })
   }
 
   // --- ControlValueAccessor ---
   writeValue(value: T): void {
-    this.value = value;
+    this.value = value
   }
-  registerOnChange(onChange: (value: T | undefined) => void): void {
-    this.onChange = onChange;
+  setDisabledState(disabled: boolean): void {
+    this.disabled = disabled
+  }
+  registerOnChange(onChange: (value: T | null) => void): void {
+    this.onChange = onChange
   }
   registerOnTouched(onTouched: () => void): void {
-    this.onTouched = onTouched;
+    this.onTouched = onTouched
   }
   // --- ControlValueAccessor ---
 
-  private syncChips(): void {
-    this.chips.forEach((chip) => {
-      chip.checked = chip.value === this.value;
-    });
+  private syncChecked(value: T | null): void {
+    this.chips.forEach((c) => {
+      c.checked = c.value === value
+    })
+  }
+  private syncDisabled(disabled: boolean): void {
+    this.chips.forEach((c) => {
+      c.disabled = disabled
+    })
   }
 }
